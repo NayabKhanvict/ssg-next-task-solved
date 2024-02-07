@@ -10,6 +10,8 @@ import {
 import { Person } from "@/utils/common/person";
 import { User } from "@/types/UserProfilesTypes";
 import { fetchData } from "@/utils/api/userProfileApi";
+import { useQuery } from "react-query";
+
 const inter = Inter({ subsets: ["latin"] });
 
 type MainLayoutProps = {};
@@ -18,24 +20,23 @@ export const MainLayout: FunctionComponent<
   PropsWithChildren<MainLayoutProps>
 > = () => {
   const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [userData, setUserData] = useState<User | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
-  const handlePersonSelection = async (person: Person) => {
-    setLoading(true);
-    setSelectedPerson(person);
-    setError(null);
-    try {
-      const data = await fetchData(person);
-      setUserData(data);
-      setError(null);
-    } catch (error) {
-      setUserData(null);
-      setError("Error fetching user data");
-    } finally {
-      setLoading(false);
+  const {
+    data: userData,
+    isLoading,
+    isError,
+  } = useQuery(
+    ["user", selectedPerson !== null ? selectedPerson : "null"],
+    () => fetchData(selectedPerson),
+    {
+      enabled: selectedPerson !== null,
+      retry: 1,
+      retryDelay: 1000,
     }
+  );
+
+  const handlePersonSelection = (person: Person) => {
+    setSelectedPerson(person);
   };
 
   return (
@@ -63,12 +64,12 @@ export const MainLayout: FunctionComponent<
           "mt-4"
         )}
       >
-        {loading ? (
+        {isLoading ? (
           <SkeletonLoader />
         ) : (
           userData && <UserProfileCard user={userData} />
         )}
-        {error && <ErrorMessage message={error} />}{" "}
+        {isError && <ErrorMessage message="Error fetching user data" />}{" "}
       </div>
     </main>
   );
