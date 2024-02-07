@@ -1,4 +1,4 @@
-import axios from "axios"; // Assuming you have Axios installed
+import axios from "axios";
 
 export const fetchData = async (person: string) => {
   try {
